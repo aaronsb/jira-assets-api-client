@@ -7,7 +7,7 @@ import path from 'path';
  * @returns The API specification as a JSON object.
  */
 export async function downloadAssetsSpec(): Promise<any> {
-  const url = 'https://dac-static.atlassian.com/cloud/assets/swagger.v3.json?_v=1.135.49';
+  const url = 'https://dac-static.atlassian.com/cloud/assets/swagger.v3.json';
 
   try {
     const response = await axios.get(url, {
@@ -59,7 +59,8 @@ export async function downloadAndSaveAssetsSpec(outputFile: string = 'assets-ope
 }
 
 // If this file is run directly
-if (require.main === module) {
+// In ESM, there's no require.main === module, so we check if import.meta.url is the same as process.argv[1]
+if (import.meta.url === `file://${process.argv[1]}`) {
   const outputFile = process.argv[2] || 'assets-openapi.json';
   downloadAndSaveAssetsSpec(outputFile)
     .then(() => console.log('Done!'))

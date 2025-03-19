@@ -1,7 +1,8 @@
 import { generate } from 'openapi-typescript-codegen';
 import path from 'path';
 import fs from 'fs';
-import { downloadAndSaveAssetsSpec } from './downloadAssetsApiSpec';
+import { downloadAndSaveAssetsSpec } from './downloadAssetsApiSpec.js';
+import { fixGeneratedCode } from './fixGeneratedCode.js';
 
 /**
  * Generates TypeScript client code from the Atlassian Assets API specification.
@@ -46,8 +47,11 @@ export async function generateAssetsApiClient(
 
     // Create a simple index file that exports everything
     createIndexFile(outputDir);
+    
+    // Fix any issues in the generated code
+    fixGeneratedCode(outputDir);
 
-    console.log(`Generated TypeScript client in ${outputDir}`);
+    console.log(`Generated and fixed TypeScript client in ${outputDir}`);
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Error generating API client: ${error.message}`);
@@ -62,7 +66,7 @@ export async function generateAssetsApiClient(
  */
 function createIndexFile(outputDir: string): void {
   // Export the OpenAPI core
-  let indexContent = `export * from './core/OpenAPI';\n`;
+  let indexContent = `export * from './core/OpenAPI.js';\n`;
 
   // Export all services
   const servicesDir = path.join(outputDir, 'services');
@@ -72,7 +76,7 @@ function createIndexFile(outputDir: string): void {
 
     for (const file of serviceFiles) {
       const serviceName = file.replace(/\.ts$/, '');
-      indexContent += `export * from './services/${serviceName}';\n`;
+      indexContent += `export * from './services/${serviceName}.js';\n`;
     }
   }
 
@@ -84,7 +88,7 @@ function createIndexFile(outputDir: string): void {
 
     for (const file of modelFiles) {
       const modelName = file.replace(/\.ts$/, '');
-      indexContent += `export * from './models/${modelName}';\n`;
+      indexContent += `export * from './models/${modelName}.js';\n`;
     }
   }
 
@@ -93,7 +97,8 @@ function createIndexFile(outputDir: string): void {
 }
 
 // If this file is run directly
-if (require.main === module) {
+// In ESM, there's no require.main === module, so we check if import.meta.url is the same as process.argv[1]
+if (import.meta.url === `file://${process.argv[1]}`) {
   const specFile = process.argv[2] || 'assets-openapi.json';
   const outputDir = process.argv[3] || 'src/generated';
 

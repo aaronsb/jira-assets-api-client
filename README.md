@@ -1,9 +1,9 @@
-# Atlassian Assets API Client
+# Atlassian JSM Insight (Assets) API Client
 
-A Node.js library that automatically generates a TypeScript client for the Atlassian Assets API from the OpenAPI specification.
+A Node.js library that automatically generates a TypeScript client for the Atlassian JSM Insight (formerly Assets) API from the OpenAPI specification.
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/atlassian/jira-assets-api-client/main/assets/logo.png" alt="Atlassian Assets API Client" width="200" />
+  <img src="https://raw.githubusercontent.com/atlassian/jira-assets-api-client/main/assets/logo.png" alt="Atlassian JSM Insight API Client" width="200" />
 </div>
 
 ## 📋 Table of Contents
@@ -21,11 +21,13 @@ A Node.js library that automatically generates a TypeScript client for the Atlas
 
 ## ✨ Features
 
-- **Auto-Generated**: Automatically downloads and generates a client from the latest Atlassian Assets API OpenAPI specification
+- **Auto-Generated**: Automatically downloads and generates a client from the latest Atlassian JSM Insight API OpenAPI specification
 - **Type Safety**: Fully typed TypeScript client with accurate models and service definitions
 - **Modern**: Built with modern JavaScript practices and tools
 - **Flexible**: Configure via environment variables or programmatic options
-- **Comprehensive**: Access to all Atlassian Assets API endpoints and features
+- **Comprehensive**: Access to all JSM Insight API endpoints and features
+- **ESM Compatible**: Works with both CommonJS and ES Modules projects
+- **Workspace Discovery**: Automatically discovers the workspace ID required for JSM Insight API
 
 ## 📦 Installation
 
@@ -37,17 +39,22 @@ npm install jira-assets-api-client
 
 ```typescript
 import { initAssetsApiClient } from 'jira-assets-api-client';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 async function main() {
   // Initialize the client
-  const assetsClient = await initAssetsApiClient({
-    baseUrl: 'https://api.atlassian.com/assets',
-    apiToken: 'your-api-token-here'
+  const insightClient = await initAssetsApiClient({
+    email: 'your-email@example.com',
+    apiToken: 'your-api-token-here',
+    instance: 'your-instance-name'
   });
 
   // Use the client to make API calls
-  const objects = await assetsClient.DefaultService.objectFindAll();
-  console.log(`Found ${objects.length} objects`);
+  const schemaList = await insightClient.DefaultService.schemaList();
+  console.log(`Found ${schemaList.values.length} schemas`);
 }
 
 main().catch(console.error);
@@ -55,15 +62,16 @@ main().catch(console.error);
 
 ## 🔐 Authentication
 
-The Atlassian Assets API uses Bearer token authentication. You can provide your API token in one of two ways:
+The Atlassian JSM Insight API uses Basic authentication with email and API token. You can provide your credentials in one of two ways:
 
 ### 1. Environment Variables
 
 Create a `.env` file in your project root:
 
 ```
-ASSETS_BASE_URL=https://api.atlassian.com/assets
+JIRA_EMAIL=your-email@example.com
 ASSETS_API_TOKEN=your-api-token-here
+JIRA_INSTANCE=your-instance-name
 ```
 
 Then load it in your code:
@@ -73,7 +81,7 @@ import dotenv from 'dotenv';
 import { initAssetsApiClient } from 'jira-assets-api-client';
 
 dotenv.config();
-const assetsClient = await initAssetsApiClient();
+const insightClient = await initAssetsApiClient();
 ```
 
 ### 2. Configuration Options
@@ -81,11 +89,19 @@ const assetsClient = await initAssetsApiClient();
 Pass authentication details directly to the client:
 
 ```typescript
-const assetsClient = await initAssetsApiClient({
-  baseUrl: 'https://api.atlassian.com/assets',
-  apiToken: 'your-api-token-here'
+const insightClient = await initAssetsApiClient({
+  email: 'your-email@example.com',
+  apiToken: 'your-api-token-here',
+  instance: 'your-instance-name'
 });
 ```
+
+### Getting an API Token
+
+1. Go to [https://id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+2. Click "Create API token"
+3. Give your token a name and click "Create"
+4. Copy the token value (you won't be able to see it again)
 
 ## 📚 API Reference
 
@@ -93,8 +109,10 @@ The client exposes the following services:
 
 ### DefaultService
 
-The main service for interacting with Atlassian Assets API. Some key methods include:
+The main service for interacting with Atlassian JSM Insight API. Some key methods include:
 
+- `schemaList()`: Get all schemas
+- `objectTypeFindAll()`: Get all object types
 - `objectFindAll()`: Get all objects
 - `objectFindById(id)`: Get a specific object by ID
 - `objectCreate(data)`: Create a new object
@@ -105,8 +123,8 @@ The main service for interacting with Atlassian Assets API. Some key methods inc
 For a complete list of available methods, initialize the client and explore the available services and methods:
 
 ```typescript
-const assetsClient = await initAssetsApiClient();
-console.log(Object.keys(assetsClient.DefaultService));
+const insightClient = await initAssetsApiClient();
+console.log(Object.keys(insightClient.DefaultService));
 ```
 
 ## 📝 Examples
@@ -114,16 +132,19 @@ console.log(Object.keys(assetsClient.DefaultService));
 ### Working with Objects
 
 ```typescript
-// Get all objects
-const objects = await assetsClient.DefaultService.objectFindAll();
+// Get all objects of a specific type
+const objects = await insightClient.DefaultService.objectFindAll({
+  objectTypeId: '1',
+  includeAttributes: true
+});
 
 // Get a specific object
-const object = await assetsClient.DefaultService.objectFindById({
+const object = await insightClient.DefaultService.objectFindById({
   id: '123456789'
 });
 
 // Create a new object
-const newObject = await assetsClient.DefaultService.objectCreate({
+const newObject = await insightClient.DefaultService.objectCreate({
   requestBody: {
     name: 'New Asset',
     objectTypeId: '1',
@@ -134,7 +155,7 @@ const newObject = await assetsClient.DefaultService.objectCreate({
 });
 
 // Update an object
-await assetsClient.DefaultService.objectUpdate({
+await insightClient.DefaultService.objectUpdate({
   id: '123456789',
   requestBody: {
     name: 'Updated Asset Name'
@@ -142,7 +163,7 @@ await assetsClient.DefaultService.objectUpdate({
 });
 
 // Delete an object
-await assetsClient.DefaultService.objectDelete({
+await insightClient.DefaultService.objectDelete({
   id: '123456789'
 });
 ```
@@ -150,38 +171,39 @@ await assetsClient.DefaultService.objectDelete({
 ### Pagination
 
 ```typescript
-async function getAllObjects() {
+async function getAllObjects(objectTypeId) {
   const allObjects = [];
   let page = 1;
   let hasMore = true;
 
   while (hasMore) {
-    const response = await assetsClient.DefaultService.objectFindAll({
-      page: page,
+    const response = await insightClient.DefaultService.objectFindAll({
+      objectTypeId,
+      includeAttributes: true,
+      page,
       resultsPerPage: 50
     });
 
     if (response && response.length > 0) {
       allObjects.push(...response);
       console.log(`Retrieved page ${page} with ${response.length} objects (total: ${allObjects.length})`);
+      page++;
     } else {
       hasMore = false;
     }
-
-    page++;
   }
 
   return allObjects;
 }
 
-const allObjects = await getAllObjects();
+const allObjects = await getAllObjects('1'); // Replace with an actual object type ID
 ```
 
 ### Error Handling
 
 ```typescript
 try {
-  const object = await assetsClient.DefaultService.objectFindById({
+  const object = await insightClient.DefaultService.objectFindById({
     id: 'non-existent-id'
   });
 } catch (error) {
@@ -204,7 +226,7 @@ jira-assets-api-client/
 ├── src/
 │   ├── downloadAssetsApiSpec.ts   # Downloads the OpenAPI spec
 │   ├── generateAssetsApiClient.ts # Generates the TypeScript client
-│   ├── fixGeneratedCode.ts        # Fixes type errors in generated code
+│   ├── fixGeneratedCode.ts        # Fixes issues in generated code
 │   ├── index.ts                   # Main entry point
 │   └── generated/                 # Generated API client code (not committed)
 ├── examples/
@@ -226,9 +248,9 @@ This project is designed to generate the API client code on-demand rather than s
 
 ### Available Scripts
 
-- `npm run download`: Download the latest Atlassian Assets API specification
+- `npm run download`: Download the latest Atlassian JSM Insight API specification
 - `npm run generate`: Generate the TypeScript client from the specification (runs fix automatically after)
-- `npm run fix`: Fix any type errors in the generated code
+- `npm run fix`: Fix any issues in the generated code
 - `npm run build`: Build the project
 - `npm run clean`: Clean the build directory
 - `npm run clean:generated`: Remove all generated files (API spec and generated code)
@@ -246,7 +268,7 @@ This project uses GitHub Actions for continuous integration and deployment:
   - The workflow is manually triggered
 
 The CI pipeline:
-1. Downloads the latest Atlassian Assets API specification
+1. Downloads the latest Atlassian JSM Insight API specification
 2. Generates the TypeScript client
 3. Builds the package
 4. Publishes to npm with public access
@@ -259,11 +281,20 @@ To set up automated publishing in your fork:
 
 ```typescript
 interface AssetsApiClientOptions {
-  // Base URL for the Atlassian Assets API
-  baseUrl?: string;
+  // Email address for authentication
+  email?: string;
   
   // API token for authentication
   apiToken?: string;
+  
+  // Jira instance name (e.g., 'your-instance' from 'your-instance.atlassian.net')
+  instance?: string;
+  
+  // Workspace ID for JSM Insight API (if not provided, it will be discovered automatically)
+  workspaceId?: string;
+  
+  // Legacy base URL (not recommended for new projects)
+  baseUrl?: string;
   
   // Path to the API specification file
   specFile?: string;
@@ -286,7 +317,7 @@ Comprehensive documentation is available in the `docs` directory:
 Additional resources:
 
 - [Examples](./examples) - Example scripts demonstrating various use cases
-- [Atlassian Assets API Documentation](https://developer.atlassian.com/cloud/assets/rest/api-group-objects/) - Official Atlassian documentation for the Assets API
+- [Atlassian JSM Insight API Documentation](https://developer.atlassian.com/cloud/jira/service-desk/rest/intro/) - Official Atlassian documentation
 
 ## 🤝 Contributing
 
