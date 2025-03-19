@@ -236,6 +236,25 @@ This project is designed to generate the API client code on-demand rather than s
 - `npm run example`: Run the basic usage example
 - `npm run example:advanced`: Run the advanced usage example
 
+### Continuous Integration
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+- **Automated Publishing**: The package is automatically published to npm when:
+  - Changes are pushed to the `main` branch that modify `package.json`
+  - A new GitHub Release is created
+  - The workflow is manually triggered
+
+The CI pipeline:
+1. Downloads the latest Atlassian Assets API specification
+2. Generates the TypeScript client
+3. Builds the package
+4. Publishes to npm with public access
+
+To set up automated publishing in your fork:
+1. Create an npm access token with publish permissions
+2. Add the token as a GitHub repository secret named `NPM_TOKEN`
+
 ### Configuration Options
 
 ```typescript
