@@ -157,6 +157,12 @@ async function main() {
 
   } catch (error) {
     console.error('Error:', error);
+    console.error('Error type:', typeof error);
+    console.error('Error properties:', Object.getOwnPropertyNames(error));
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
   }
 }
 
