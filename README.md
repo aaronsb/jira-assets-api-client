@@ -1,9 +1,9 @@
-# Atlassian JSM Insight (Assets) API Client
+# Atlassian JSM Insight API
 
-A Node.js library that automatically generates a TypeScript client for the Atlassian JSM Insight (formerly Assets) API from the OpenAPI specification.
+A Node.js library that automatically generates a TypeScript client for the Atlassian JSM Insight API from the OpenAPI specification.
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/atlassian/jira-assets-api-client/main/assets/logo.png" alt="Atlassian JSM Insight API Client" width="200" />
+  <img src="https://raw.githubusercontent.com/atlassian/jira-insights-api/main/assets/logo.png" alt="Atlassian JSM Insight API Client" width="200" />
 </div>
 
 ## 📋 Table of Contents
@@ -33,13 +33,13 @@ A Node.js library that automatically generates a TypeScript client for the Atlas
 ## 📦 Installation
 
 ```bash
-npm install jira-assets-api-client
+npm install jira-insights-api
 ```
 
 ## 🚀 Quick Start
 
 ```typescript
-import { initAssetsApiClient } from 'jira-assets-api-client';
+import { initAssetsApiClient } from 'jira-insights-api';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -79,7 +79,7 @@ Then load it in your code:
 
 ```typescript
 import dotenv from 'dotenv';
-import { initAssetsApiClient } from 'jira-assets-api-client';
+import { initAssetsApiClient } from 'jira-insights-api';
 
 dotenv.config();
 const insightClient = await initAssetsApiClient();
@@ -223,7 +223,7 @@ See the [examples](./examples) directory for more usage examples.
 ### Project Structure
 
 ```
-jira-assets-api-client/
+jira-insights-api/
 ├── src/
 │   ├── downloadAssetsApiSpec.ts   # Downloads the OpenAPI spec
 │   ├── generateAssetsApiClient.ts # Generates the TypeScript client
