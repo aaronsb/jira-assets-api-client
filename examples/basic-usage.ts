@@ -39,7 +39,7 @@ async function main() {
       apiToken,
       instance,
       workspaceId, // Will be discovered automatically if not provided
-      regenerate: true // Force regeneration of the client code
+      // No need to regenerate the client code as it's pre-generated in the package
     });
 
     console.log('Atlassian JSM Insight API client initialized successfully!');

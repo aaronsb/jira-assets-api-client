@@ -11,6 +11,7 @@ dist/
 assets-openapi.json
 *-openapi.json
 src/generated/
+temp-generated/
 *.generated.*
 
 # Logs

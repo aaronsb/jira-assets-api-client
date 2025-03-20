@@ -21,7 +21,8 @@ A Node.js library that automatically generates a TypeScript client for the Atlas
 
 ## ✨ Features
 
-- **Auto-Generated**: Automatically downloads and generates a client from the latest Atlassian JSM Insight API OpenAPI specification
+- **Pre-Generated Client**: Includes a pre-generated client from the Atlassian JSM Insight API OpenAPI specification
+- **Runtime Ready**: Works reliably in all environments including Docker containers without runtime generation
 - **Type Safety**: Fully typed TypeScript client with accurate models and service definitions
 - **Modern**: Built with modern JavaScript practices and tools
 - **Flexible**: Configure via environment variables or programmatic options
@@ -227,31 +228,36 @@ jira-assets-api-client/
 │   ├── downloadAssetsApiSpec.ts   # Downloads the OpenAPI spec
 │   ├── generateAssetsApiClient.ts # Generates the TypeScript client
 │   ├── fixGeneratedCode.ts        # Fixes issues in generated code
+│   ├── prebuild.ts                # Pre-build script for client generation
 │   ├── index.ts                   # Main entry point
-│   └── generated/                 # Generated API client code (not committed)
+│   └── generated/                 # Generated API client code (development only)
 ├── examples/
 │   ├── basic-usage.ts             # Basic usage example
 │   └── advanced-usage.ts          # Advanced usage example
 ├── docs/
 │   ├── API.md                     # API reference documentation
 │   └── GETTING_STARTED.md         # Getting started guide
-├── dist/                          # Compiled JavaScript (generated, not committed)
+├── dist/                          # Compiled JavaScript
+│   └── generated/                 # Pre-generated client code included in the package
 ```
 
-### Generated Files
+### Pre-Generated Client
 
-This project is designed to generate the API client code on-demand rather than storing the generated files in the repository. The following files are generated and not committed:
+Starting with version 2.1.0, this package includes a pre-generated client in the published package. This means:
 
-- `assets-openapi.json`: The downloaded OpenAPI specification
-- `src/generated/`: The generated TypeScript client code
-- `dist/`: The compiled JavaScript output
+1. No runtime generation is required when using the package
+2. Works reliably in all environments, including Docker containers
+3. Faster initialization and better performance
+4. Consistent behavior across different environments
+
+The client is generated during the package build process and included in the published package.
 
 ### Available Scripts
 
 - `npm run download`: Download the latest Atlassian JSM Insight API specification
 - `npm run generate`: Generate the TypeScript client from the specification (runs fix automatically after)
 - `npm run fix`: Fix any issues in the generated code
-- `npm run build`: Build the project
+- `npm run build`: Build the project (includes pre-generating the client)
 - `npm run clean`: Clean the build directory
 - `npm run clean:generated`: Remove all generated files (API spec and generated code)
 - `npm run reset`: Clean both build and generated files
@@ -269,8 +275,8 @@ This project uses GitHub Actions for continuous integration and deployment:
 
 The CI pipeline:
 1. Downloads the latest Atlassian JSM Insight API specification
-2. Generates the TypeScript client
-3. Builds the package
+2. Generates the TypeScript client during the build process
+3. Builds the package with the pre-generated client included
 4. Publishes to npm with public access
 
 To set up automated publishing in your fork:

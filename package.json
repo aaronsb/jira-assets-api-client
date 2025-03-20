@@ -1,19 +1,21 @@
 {
   "name": "jira-assets-api-client",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A Node.js library that automatically generates a TypeScript client for the Atlassian JSM Insight (formerly Assets) API from the OpenAPI specification",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
+    "dist/generated",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
     "build": "tsc",
     "clean": "rimraf dist",
-    "clean:generated": "rimraf src/generated assets-openapi.json",
+    "clean:generated": "rimraf src/generated temp-generated assets-openapi.json",
     "prebuild": "npm run clean",
+    "postbuild": "node --loader ts-node/esm dist/prebuild.js",
     "prepare": "npm run build",
     "start": "node --loader ts-node/esm src/index.ts",
     "download": "node --loader ts-node/esm src/downloadAssetsApiSpec.ts",

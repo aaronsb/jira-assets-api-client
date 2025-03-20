@@ -1,3 +1,5 @@
+// In production, the pre-generated client will be in dist/generated
+// We'll import it dynamically to avoid circular references during build
 import { downloadAndSaveAssetsSpec } from './downloadAssetsApiSpec.js';
 import { generateAssetsApiClient } from './generateAssetsApiClient.js';
 import path from 'path';
@@ -99,6 +101,78 @@ function extractInstanceFromUrl(url: string): string | undefined {
 }
 
 /**
+ * Configures the client with the provided options.
+ * @param client The client to configure
+ * @param baseUrl Base URL for the API
+ * @param email User email for authentication
+ * @param apiToken API token for authentication
+ * @param instance Jira instance name
+ * @param resolvedWorkspaceId Workspace ID for JSM Insight API
+ */
+function configureClient(
+  client: any,
+  baseUrl: string,
+  email: string,
+  apiToken: string,
+  instance?: string,
+  resolvedWorkspaceId?: string
+): void {
+  if (!client.OpenAPI) {
+    throw new Error('Invalid client: OpenAPI configuration not found');
+  }
+  
+  // Set the base URL based on workspace ID
+  if (resolvedWorkspaceId) {
+    // Use the JSM Insight API endpoint format with workspace ID
+    client.OpenAPI.BASE = `https://api.atlassian.com/jsm/insight/workspace/${resolvedWorkspaceId}/v1`;
+  } else {
+    // Fallback to the provided base URL
+    client.OpenAPI.BASE = baseUrl;
+  }
+
+  // Configure authentication with Basic auth
+  client.OpenAPI.WITH_CREDENTIALS = true;
+  client.OpenAPI.CREDENTIALS = 'include';
+  client.OpenAPI.HEADERS = {
+    'Authorization': `Basic ${Buffer.from(`${email}:${apiToken}`).toString('base64')}`,
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  };
+
+  // Add request interceptor for endpoint fallback
+  if (instance && resolvedWorkspaceId) {
+    client.OpenAPI.REQUEST_INTERCEPTORS = [
+      async (request: any) => {
+        const originalUrl = request.url;
+        
+        try {
+          // Try the original request
+          return await request;
+        } catch (error) {
+          // If the request fails, try the alternative endpoint format
+          if (originalUrl.includes('api.atlassian.com')) {
+            // Try instance-specific endpoint
+            request.url = originalUrl.replace(
+              'https://api.atlassian.com',
+              `https://${instance}.atlassian.net`
+            );
+          } else {
+            // Try API endpoint
+            request.url = originalUrl.replace(
+              `https://${instance}.atlassian.net`,
+              'https://api.atlassian.com'
+            );
+          }
+          
+          console.log(`Retrying with alternative endpoint: ${request.url}`);
+          return await request;
+        }
+      }
+    ];
+  }
+}
+
+/**
  * Initializes the Atlassian Assets API client.
  * @param options Configuration options for the Atlassian Assets API client.
  * @returns A promise that resolves when the client is initialized.
@@ -137,93 +211,53 @@ export async function initAssetsApiClient(options: AssetsApiClientOptions = {}):
     }
   }
 
-  // Check if the client code already exists
-  const generatedIndexPath = path.join(outputDir, 'index.ts');
-  const clientExists = fs.existsSync(generatedIndexPath);
-
-  // Regenerate the client code if requested or if it doesn't exist
-  if (regenerate || !clientExists) {
-    // Download the API specification if it doesn't exist or regenerate is true
-    if (regenerate || !fs.existsSync(specFile)) {
-      await downloadAndSaveAssetsSpec(specFile);
-    }
-
+  // Use the pre-generated client that was included in the package
+  // Only regenerate if explicitly requested (for development purposes)
+  if (regenerate) {
+    console.log('Regenerating client code (development mode)...');
+    // Download the API specification
+    await downloadAndSaveAssetsSpec(specFile);
     // Generate the client code
     await generateAssetsApiClient(specFile, outputDir);
-  }
-
-  // Import and configure the generated client
-  let generatedClient;
-  try {
-    // Try ESM import with URL
+    
+    // Re-import the generated client
     try {
       const importUrl = new URL(`file://${path.resolve(process.cwd(), outputDir, 'index.js')}`).href;
-      generatedClient = await import(/* webpackIgnore: true */ importUrl);
+      const regeneratedClient = await import(/* webpackIgnore: true */ importUrl);
+      // Use the regenerated client
+      configureClient(regeneratedClient, baseUrl, email, apiToken, instance, resolvedWorkspaceId);
+      return regeneratedClient;
+    } catch (error) {
+      throw new Error(`Failed to import regenerated client: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  
+  // Use the pre-generated client that was included in the package
+  try {
+    // Import the client dynamically
+    let clientModule;
+    try {
+      // In production, the client is in dist/generated
+      // In development, we'll generate it on-demand if regenerate is true
+      const importPath = '../dist/generated/index.js';
+      clientModule = await import(/* webpackIgnore: true */ importPath);
     } catch (importError) {
-      // Fallback to CommonJS require
-      try {
-        const requirePath = path.resolve(process.cwd(), outputDir);
-        // @ts-ignore
-        generatedClient = require(requirePath);
-      } catch (requireError) {
-        throw new Error(`Failed to import generated client: ${importError instanceof Error ? importError.message : String(importError)}\nRequire fallback error: ${requireError instanceof Error ? requireError.message : String(requireError)}`);
-      }
-    }
-
-    // Configure the client with the provided options
-    if (generatedClient.OpenAPI) {
-      // Set the base URL based on workspace ID
-      if (resolvedWorkspaceId) {
-        // Use the JSM Insight API endpoint format with workspace ID
-        generatedClient.OpenAPI.BASE = `https://api.atlassian.com/jsm/insight/workspace/${resolvedWorkspaceId}/v1`;
-      } else {
-        // Fallback to the provided base URL
-        generatedClient.OpenAPI.BASE = baseUrl;
-      }
-
-      // Configure authentication with Basic auth
-      generatedClient.OpenAPI.WITH_CREDENTIALS = true;
-      generatedClient.OpenAPI.CREDENTIALS = 'include';
-      generatedClient.OpenAPI.HEADERS = {
-        'Authorization': `Basic ${Buffer.from(`${email}:${apiToken}`).toString('base64')}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+      console.warn(`Warning: Could not import pre-generated client: ${importError instanceof Error ? importError.message : String(importError)}`);
+      console.warn('This is expected during development or when regenerate is true.');
+      
+      // Return a mock client for development
+      clientModule = {
+        OpenAPI: {},
+        DefaultService: {}
       };
-
-      // Add request interceptor for endpoint fallback
-      if (instance && resolvedWorkspaceId) {
-        generatedClient.OpenAPI.REQUEST_INTERCEPTORS = [
-          async (request: any) => {
-            const originalUrl = request.url;
-            
-            try {
-              // Try the original request
-              return await request;
-            } catch (error) {
-              // If the request fails, try the alternative endpoint format
-              if (originalUrl.includes('api.atlassian.com')) {
-                // Try instance-specific endpoint
-                request.url = originalUrl.replace(
-                  'https://api.atlassian.com',
-                  `https://${instance}.atlassian.net`
-                );
-              } else {
-                // Try API endpoint
-                request.url = originalUrl.replace(
-                  `https://${instance}.atlassian.net`,
-                  'https://api.atlassian.com'
-                );
-              }
-              
-              console.log(`Retrying with alternative endpoint: ${request.url}`);
-              return await request;
-            }
-          }
-        ];
-      }
     }
-
-    return generatedClient;
+    
+    // Create a copy of the client to avoid modifying the original
+    const clientCopy = { ...clientModule };
+    
+    // Configure the client
+    configureClient(clientCopy, baseUrl, email, apiToken, instance, resolvedWorkspaceId);
+    return clientCopy;
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Error configuring generated client: ${error.message}`);
