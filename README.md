@@ -243,7 +243,7 @@ jira-assets-api-client/
 
 ### Pre-Generated Client
 
-Starting with version 2.1.0, this package includes a pre-generated client in the published package. This means:
+Starting with version 2.1.1, this package includes a pre-generated client in the published package. This means:
 
 1. No runtime generation is required when using the package
 2. Works reliably in all environments, including Docker containers

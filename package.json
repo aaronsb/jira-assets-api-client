@@ -1,6 +1,6 @@
 {
   "name": "jira-assets-api-client",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "A Node.js library that automatically generates a TypeScript client for the Atlassian JSM Insight (formerly Assets) API from the OpenAPI specification",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
