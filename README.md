@@ -3,7 +3,7 @@
 A Node.js library that automatically generates a TypeScript client for the Atlassian JSM Insight API from the OpenAPI specification.
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/atlassian/jira-insights-api/main/assets/logo.png" alt="Atlassian JSM Insight API Client" width="200" />
+  <img src="https://raw.githubusercontent.com/aaronsb/jira-insights-api/main/assets/logo.png" alt="Atlassian JSM Insight API Client" width="200" />
 </div>
 
 ## 📋 Table of Contents
