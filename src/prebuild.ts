@@ -35,9 +35,46 @@ async function prebuild() {
       fs.mkdirSync(finalOutputDir, { recursive: true });
     }
     
-    // Copy the generated files to the final output directory
-    console.log(`Copying generated files from ${tempOutputDir} to ${finalOutputDir}...`);
-    copyDirectory(tempOutputDir, finalOutputDir);
+    // Create a tsconfig.generated.json file dynamically
+    console.log('Creating tsconfig.generated.json file...');
+    const tsconfig = {
+      compilerOptions: {
+        target: "ES2020",
+        module: "NodeNext",
+        moduleResolution: "NodeNext",
+        esModuleInterop: true,
+        outDir: "./dist/generated",
+        rootDir: "./temp-generated",
+        strict: true,
+        declaration: true,
+        sourceMap: true,
+        resolveJsonModule: true
+      },
+      include: ["temp-generated/**/*"],
+      exclude: ["node_modules"]
+    };
+    
+    fs.writeFileSync('tsconfig.generated.json', JSON.stringify(tsconfig, null, 2));
+    
+    // Compile the TypeScript files
+    console.log(`Compiling generated TypeScript files from ${tempOutputDir} to ${finalOutputDir}...`);
+    
+    // Run the TypeScript compiler on the generated files
+    const { execSync } = await import('child_process');
+    try {
+      execSync('npx tsc -p tsconfig.generated.json', { stdio: 'inherit' });
+      console.log('Successfully compiled generated TypeScript files');
+      
+      // Clean up the temporary tsconfig file
+      fs.unlinkSync('tsconfig.generated.json');
+    } catch (error) {
+      console.error('Error compiling generated TypeScript files:', error);
+      // Clean up the temporary tsconfig file even if compilation fails
+      if (fs.existsSync('tsconfig.generated.json')) {
+        fs.unlinkSync('tsconfig.generated.json');
+      }
+      throw error;
+    }
     
     console.log('Pre-build process completed successfully!');
   } catch (error) {
